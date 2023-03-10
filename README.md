@@ -11,8 +11,8 @@
 ### Running the code
 To run python code, use :
 
-    python3.x Genetics5.py
+    python3.x ./Lab1/Genetics5.py
 
 To run Julia code, use :
 
-    Julia Genetics5.jl
+    Julia ./Lab1/Genetics5.jl
