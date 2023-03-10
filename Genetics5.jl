@@ -28,6 +28,8 @@ function genetic_algorithm(pop_size::Int64, num_genes::Int64, fitness_func::Func
         fitnesses = [fitness_func(individual) for individual in population]
         average = sum(fitnesses) / length(fitnesses)
         standard_dev = std(fitnesses)
+        println("The average of the cuurent generation is: $(average)")
+        println("The std of the current generation is: $(standard_dev)")
         elite_size = Int(pop_size * 0.1)
         elite_indices = sortperm(fitnesses, rev=true)[1:elite_size]
         elites = [population[i] for i in elite_indices]
