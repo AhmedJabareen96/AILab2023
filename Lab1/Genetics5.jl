@@ -14,7 +14,7 @@ end
 
 # Genetic Algorithm
 function genetic_algorithm(pop_size::Int64, num_genes::Int64, fitness_func::Function, max_generations::Int64)
-    
+    iteration = 0
     # initialize population
     population = [] 
     for i in 1:pop_size
@@ -28,8 +28,9 @@ function genetic_algorithm(pop_size::Int64, num_genes::Int64, fitness_func::Func
         fitnesses = [fitness_func(individual) for individual in population]
         average = sum(fitnesses) / length(fitnesses)
         standard_dev = std(fitnesses)
-        println("The average of the cuurent generation is: $(average)")
-        println("The std of the current generation is: $(standard_dev)")
+        println("The average of the cuurent generation ($(iteration)) is: $(average)")
+        println("The std of the current generation ($(iteration)) is: $(standard_dev)")
+        println("----------")
         elite_size = Int(pop_size * 0.1)
         elite_indices = sortperm(fitnesses, rev=true)[1:elite_size]
         elites = [population[i] for i in elite_indices]
@@ -42,6 +43,7 @@ function genetic_algorithm(pop_size::Int64, num_genes::Int64, fitness_func::Func
             push!(offspring, child)
         end
         population = vcat(elites, offspring)
+        iteration+=1
     end
     # find individual with highest fitness
     best_individual = argmax(fitness_func, population)
