@@ -8,6 +8,9 @@
  - [ ] create struct/ class objects
  - [ ] create histogram add shown in question 3
 
+ #### (Due next wekk)
+ - [ ] Add N-Queens problem
+
 ### Running the code
 To run python code, use :
 
