@@ -6,16 +6,12 @@ class SNVector:
         self.size = size
 
     def evaluate(self):
-        sortingNetworks = 0
-        for network in self.networks:
-            sortingNetworks += self.checkSortingNetwork(network)
+        sortingNetworks = sum(self.checkSortingNetwork(network) for network in self.networks)
         self.fitness = len(self.networks) - sortingNetworks
         self.networks = []
 
     def checkSortingNetwork(self, network):
-        vec = []
-        for i in range(len(self.vector)):
-            vec.append(self.vector[i])
+        vec = list(self.vector)  # Create a copy of the vector
         for i in range(0, len(network.str), 2):
             i1 = vec[network.str[i]]
             i2 = vec[network.str[i + 1]]
