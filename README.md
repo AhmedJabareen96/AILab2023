@@ -9,7 +9,7 @@ Ahmed Jabareen , ID: 314722307
 
 To run python code, use :
 
-    python3.x ./LabX:\ Lab\ Name\ Here\ /main.py
+    python3.x ./LabX/main.py
 
 replace 'x' with your current version of python. (3.8 or later is recommended)
 
