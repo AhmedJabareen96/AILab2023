@@ -2,14 +2,13 @@ from random import randint, random, choices, sample
 import Graph
 from SortingNetwork import SortingNetwork
 from SNVector import SNVector
+
 GROUP_SIZE = 5000
 
 
 class GenStruct:
     def __init__(self, N, arrSize):
-        self.arr = []
-        for i in range(arrSize):
-            self.arr.append(randint(1, N))
+        self.arr = [randint(1, N) for _ in range(arrSize)]
         self.fitness = -1
 
 
@@ -29,35 +28,25 @@ class GeneticAlgo:
         self.initVec()
 
     def initPopulation(self):
-        for _ in range(self.popSize):
-            member = SortingNetwork(self.N, self.minCN, self.maxCN)
-            self.population.append(member)
-            self.buffer.append(member)
+        self.population = [SortingNetwork(self.N, self.minCN, self.maxCN) for _ in range(self.popSize)]
+        self.buffer = [SortingNetwork(self.N, self.minCN, self.maxCN) for _ in range(self.popSize)]
 
     def initVec(self):
-        for i in range(2 ** self.N):
-            bnumber = int(("{:0%db}" % self.N).format(i))  # create binary number
-            bnumber = '{numbers:0{width}d}'.format(width=self.N, numbers=bnumber)
-            member = SNVector(self.N, list(bnumber))
-            self.vectors.append(member)
+        self.vectors = [SNVector(self.N, list(format(i, '0{:d}b'.format(self.N)))) for i in range(2 ** self.N)]
 
     def calcFitness(self):
-        for i in range(self.popSize):
-            self.population[i].evaluate()
-            self.buffer[i].evaluate()
-        for i in range(len(self.vectors)):
-            self.vectors[i].evaluate()
+        for member in self.population:
+            member.evaluate()
+        for vector in self.vectors:
+            vector.evaluate()
 
     def mate(self):
-        esize = self.popSize * 0.1
-        for i in range(int(esize), self.popSize):
-            i1 = randint(0, self.popSize / 2)
-            i2 = randint(0, self.popSize / 2)
+        esize = int(self.popSize * 0.1)
+        for i in range(esize, self.popSize):
+            i1 = randint(0, int(self.popSize / 2))
+            i2 = randint(0, int(self.popSize / 2))
             spos = randint(0, self.arrSize - 1)
-            if len(self.population[i1].str) > len(self.population[i2].str):
-                self.buffer[i].str = self.population[i1].str[0:spos] + self.population[i2].str[spos:]
-            else:
-                self.buffer[i].str = self.population[i2].str[0:spos] + self.population[i1].str[spos:]
+            self.buffer[i].str = self.population[i1].str[:spos] + self.population[i2].str[spos:]
 
             if random() < self.mutation:
                 self.mutate(i)
@@ -71,67 +60,50 @@ class GeneticAlgo:
         while i2 % 2 == 1:
             i2 = randint(0, self.arrSize - 2)
 
-        tmp = self.buffer[i].str[i1]
-        self.buffer[i].str[i1] = self.buffer[i].str[i2]
-        self.buffer[i].str[i2] = tmp
-
-        tmp = self.buffer[i].str[i1 + 1]
-        self.buffer[i].str[i1 + 1] = self.buffer[i].str[i2 + 1]
-        self.buffer[i].str[i2 + 1] = tmp
+        self.buffer[i].str[i1], self.buffer[i].str[i2] = self.buffer[i].str[i2], self.buffer[i].str[i1]
+        self.buffer[i].str[i1 + 1], self.buffer[i].str[i2 + 1] = self.buffer[i].str[i2 + 1], self.buffer[i].str[i1 + 1]
 
     def swap(self):
-        temp = self.population
-        self.population = self.buffer
-        self.buffer = temp
+        self.population, self.buffer = self.buffer, self.population
 
     def printBest(self):
-        print("SOL = ", self.population[0].str)
-        print('FITNESS = ', self.population[0].fitness)
-        print('ARRAY SIZE = ', len(self.population[0].str))
+        best_member = self.population[0]
+        print("SOL =", best_member.str)
+        print('FITNESS =', best_member.fitness)
+        print('ARRAY SIZE =', len(best_member.str))
         print()
 
     def sortByFitness(self):
-        self.population.sort(key=self.fitnessSort)
-        self.vectors.sort(key=self.fitnessSort)
+        self.population.sort(key=lambda x: x.fitness)
+        self.vectors.sort(key=lambda x: x.fitness)
 
-    def fitnessSort(self, x):
-        return x.fitness
-
-    def assign(self, itration):
+    def assign(self, iteration):
         if self.N < 10:
-            for i in range(self.popSize):
-                self.population[i].vectors = self.vectors
-                if i < len(self.vectors):
-                    self.vectors[i].networks = self.population
+            for member in self.population:
+                member.vectors = self.vectors
+            for i in range(len(self.vectors)):
+                self.vectors[i].networks = self.population
         else:
-            if itration == 0:
-                for i in range(self.popSize):
-                    self.population[i].vectors = []
-                    vectorsArr = sample(range(len(self.vectors)), k=GROUP_SIZE)
-                    for j in vectorsArr:
-                        self.population[i].vectors.append(self.vectors[j])
-                        self.vectors[j].networks.append(self.population[i])
+            if iteration == 0:
+                for member in self.population:
+                    member.vectors = [self.vectors[j] for j in sample(range(len(self.vectors)), k=GROUP_SIZE)]
+                    for vector in member.vectors:
+                        vector.networks.append(member)
             else:
-                for i in range(self.popSize):
-                    self.population[i].vectors = []
-                    vectorsArr = sample(range(int(len(self.vectors) / 2)), k=GROUP_SIZE)
-                    for j in vectorsArr:
-                        self.population[i].vectors.append(self.vectors[j])
-                        self.vectors[j].networks.append(self.population[i])
+                for member in self.population:
+                    member.vectors = [self.vectors[j] for j in sample(range(int(len(self.vectors) / 2)), k=GROUP_SIZE)]
+                    for vector in member.vectors:
+                        vector.networks.append(member)
 
     def run(self):
         fitnessArray = []
         sizeArray = []
         for i in range(self.maxIter):
-            # we assign a group of vectors for each member (in case of k=6 the group is all the vectors)
             self.assign(i)
-            # we calc the fitness for each vector/member
             self.calcFitness()
-            # we sort the vectors/population
             self.sortByFitness()
-            print("ITRATION : ", i, '/', self.maxIter)
+            print("ITERATION:", i, '/', self.maxIter)
             self.printBest()
-            # FOR THE GRAPH
             fitnessArray.append(self.population[0].fitness)
             sizeArray.append(len(self.population[0].str))
             if self.population[0].fitness == self.minCN:
@@ -139,3 +111,13 @@ class GeneticAlgo:
             self.mate()
         Graph.draw(fitnessArray)
         Graph.draw(sizeArray, "Array Size")
+
+
+
+# N = 10
+# minCN = 5
+# maxCN = 20
+# maxIter = 100
+
+# genetic_algo = GeneticAlgo(N, minCN, maxCN, maxIter)
+# genetic_algo.run()
