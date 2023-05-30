@@ -111,3 +111,13 @@ class GeneticAlgo:
             self.mate()
         Graph.draw(fitnessArray)
         Graph.draw(sizeArray, "Array Size")
+
+
+
+# N = 10
+# minCN = 5
+# maxCN = 20
+# maxIter = 100
+
+# genetic_algo = GeneticAlgo(N, minCN, maxCN, maxIter)
+# genetic_algo.run()
