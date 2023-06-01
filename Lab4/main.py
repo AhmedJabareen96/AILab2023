@@ -1,59 +1,56 @@
-import random
-from GeneticAlgo import GeneticAlgo
+import numpy as np
+import matplotlib.pyplot as plt
+from genetic_algorithm import GeneticAlgorithm
+from coevolution import Coevolution
 
+def main():
+    print("Sorting Network")
+    print("---------------")
+    print("1. Network of 6 elements")
+    print("2. Network of 16 elements")
+    print("Press any other key to exit")
 
-def genetic(k):
-    if k == 6:
-        ga = GeneticAlgo(k, 24, 30, 10)
-        ga.run()
+    choice = input("Enter your choice: ")
+
+    if choice == "1":
+        num_elements = 6
+    elif choice == "2":
+        num_elements = 16
     else:
-        ga = GeneticAlgo(k, 122, 130, 10)
-        ga.run()
+        return
 
+    population_size = 100
+    generations = 50
+    input_vector = np.random.randint(0, 100, size=num_elements)
 
-def generate_array(size):
-    arr = []
-    for j in range(size):
-        arr.append(j)
-    random.shuffle(arr)
-    return arr
+    ga = GeneticAlgorithm(num_elements, population_size, generations)
+    best_fitness_scores = ga.evolve(input_vector)
 
+    plt.plot(best_fitness_scores)
+    plt.xlabel('Generation')
+    plt.ylabel('Best Fitness Score')
+    plt.title('Genetic Algorithm - Sorting Network')
+    plt.show()
 
-def checkArr(SOL, arr):
-    for k in range(0, len(SOL), 2):
-        i1 = arr[SOL[k]]
-        i2 = arr[SOL[k + 1]]
-        if i1 > i2:
-            temp = arr[SOL[k]]
-            arr[SOL[k]] = arr[SOL[k + 1]]
-            arr[SOL[k + 1]] = temp
-    for k in range(len(arr) - 1):
-        if arr[k] > arr[k + 1]:
-            return False
-    return True
+    coevolution = Coevolution(num_elements, population_size, generations)
+    best_network_fitness_scores, best_vector_fitness_scores = coevolution.evolve()
 
+    plt.plot(best_network_fitness_scores, label='Best Network Fitness')
+    plt.plot(best_vector_fitness_scores, label='Best Vector Fitness')
+    plt.xlabel('Generation')
+    plt.ylabel('Fitness Score')
+    plt.title('Coevolution - Sorting Network')
+    plt.legend()
+    plt.show()
 
-# we used this function to check if the answer is optimal
-def check_sol(SOL, size):
-    arrs = []
-    for _ in range(1000):
-        arrs.append(generate_array(size))
+    best_network = coevolution.network_population[np.argmax(best_network_fitness_scores)]
+    best_vector = coevolution.vector_population[np.argmax(best_vector_fitness_scores)]
+    best_sorted_vector = best_network.sort(best_vector)
 
-    for arr in arrs:
-        print(checkArr(SOL, arr))
-
+    print("Best Vector:", best_vector)
+    print("Best Sorting Network:")
+    print(best_network)
+    print("Optimal Number of Network Comparators:", best_network.num_comparators)
 
 if __name__ == '__main__':
-    running = True
-    while running:
-        print()
-        print("CHOOSE 1 OR 2 TO RUN:")
-        input_file = input('1 --> K = 6 \t 2 --> K = 16 \t PRESS ANY OTHER KEY TO EXIT\n')
-        if input_file == '1':
-            genetic(6)
-        else:
-            if input_file == '2':
-                genetic(16)
-            else:
-                running = False
-    # check_sol(SOL, 6)
+    main()
