@@ -18,7 +18,15 @@ def main():
     generations = 100
 
     coevolution = Coevolution(num_elements, population_size, generations)
-    best_network_fitness_scores, best_vector_fitness_scores = coevolution.evolve()
+    best_network_fitness_scores, best_vector_fitness_scores, comparator_counts = coevolution.evolve()
+
+    # Print best fitness scores and comparator counts for each generation
+    for generation in range(generations):
+        print(f"Generation {generation+1}:")
+        print(f"Best Sorting Network Fitness: {best_network_fitness_scores[generation]}")
+        print(f"Best Vector Fitness: {best_vector_fitness_scores[generation]}")
+        print(f"Number of Comparators: {comparator_counts[generation]}")
+        print()
 
     # Plotting fitness scores
     plt.plot(range(generations), best_network_fitness_scores, label='Network Fitness')
