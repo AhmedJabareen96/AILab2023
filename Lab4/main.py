@@ -1,5 +1,7 @@
-import matplotlib.pyplot as plt
 from coevolution import Coevolution
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 def main():
     num_elements = 0
@@ -20,11 +22,15 @@ def main():
     coevolution = Coevolution(num_elements, population_size, generations)
     best_network_fitness_scores, best_vector_fitness_scores, comparator_counts = coevolution.evolve()
 
-    # Print best fitness scores and comparator counts for each generation
+    # Print best fitness scores, best network, and best vector for each generation
     for generation in range(generations):
         print(f"Generation {generation+1}:")
         print(f"Best Sorting Network Fitness: {best_network_fitness_scores[generation]}")
+        best_network = coevolution.network_population[np.argmax(best_network_fitness_scores[generation])]
+        print(f"Best Network:\n{best_network.comparators}")
         print(f"Best Vector Fitness: {best_vector_fitness_scores[generation]}")
+        best_vector = coevolution.vector_population[np.argmax(best_vector_fitness_scores[generation])]
+        print(f"Best Vector:\n{best_vector}")
         print(f"Number of Comparators: {comparator_counts[generation]}")
         print()
 
@@ -36,6 +42,7 @@ def main():
     plt.title('Fitness Scores over Generations')
     plt.legend()
     plt.show()
+
 
 if __name__ == '__main__':
     main()

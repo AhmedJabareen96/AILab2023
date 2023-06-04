@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 from sorting_network import SortingNetwork
 
 MUTATION_RATE = 0.1  # try tuning this
@@ -22,7 +23,7 @@ class Coevolution:
     def generate_initial_population(self):
         for _ in range(self.population_size):
             network = SortingNetwork(self.num_elements)
-            vector = np.random.randint(0, 2, size=self.num_elements)
+            vector = np.random.randint(1, 17, size=self.num_elements)
             self.network_population.append(network)
             self.vector_population.append(vector)
 
