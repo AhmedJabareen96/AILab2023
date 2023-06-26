@@ -16,7 +16,7 @@ def main():
         else:
             return
 
-    population_size = 50
+    population_size = 500
     generations = 100
 
     coevolution = Coevolution(num_elements, population_size, generations)
@@ -42,6 +42,8 @@ def main():
     plt.title('Fitness Scores over Generations')
     plt.legend()
     plt.show()
+
+    print()
 
 
 if __name__ == '__main__':
