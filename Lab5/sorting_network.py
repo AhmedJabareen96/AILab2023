@@ -7,7 +7,7 @@ class SortingNetwork:
     def __init__(self, num_elements):
         self.num_elements = num_elements
         self.num_comparators = num_elements * (num_elements - 1) // 2
-        self.comparators = np.zeros((self.num_comparators, 2), dtype=int)
+        self.generate_random()
 
     def crossover(self, other):
         child = SortingNetwork(self.num_elements)
@@ -16,6 +16,10 @@ class SortingNetwork:
                                      other.comparators)
         return child
 
+    def copy(self):
+        new_network = SortingNetwork(self.num_elements)
+        new_network.comparators = np.copy(self.comparators)
+        return new_network
     def generate_random(self):
         self.comparators = np.random.randint(0, self.num_elements, size=(self.num_comparators, 2))
 
@@ -25,6 +29,13 @@ class SortingNetwork:
             if input_vector[a] > input_vector[b]:
                 input_vector[a], input_vector[b] = input_vector[b], input_vector[a]
         return input_vector
+    def delete_comp(self,index):
+        np.delete(self.comparators,index)
+        self.num_comparators-=1
+    def add_comp(self,index):
+        new_comparator = np.random.randint(0, self.num_elements, size=(1, 2))
+        self.comparators = np.append(self.comparators, new_comparator, axis=0)
+        self.num_comparators += 1
     def draw(self):
         # Create a directed graph
         graph = nx.DiGraph()
