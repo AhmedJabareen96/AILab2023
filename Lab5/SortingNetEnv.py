@@ -5,7 +5,7 @@ from gym import spaces
 from matplotlib import pyplot as plt
 from stable_baselines3 import DQN
 from sympy.abc import epsilon
-
+from sorting_network import SortingNetwork
 
 class SortingNetworkEnv(gym.Env):
     def __init__(self, num_elements):
@@ -14,6 +14,7 @@ class SortingNetworkEnv(gym.Env):
         self.num_elements = num_elements
         self.action_space = spaces.Discrete(num_elements-1)  # Actions correspond to indices of elements
         self.observation_space = spaces.Box(low=0, high=1, shape=(num_elements,))  # State represents the current order of elements
+        self.network = SortingNetwork(self.num_elements)
 
     def reset(self):
         self.state = np.random.rand(self.num_elements)  # Initialize the state with random order of elements
@@ -55,20 +56,23 @@ model.learn(total_timesteps=10000 )
 # Save the trained model
 model.save("dqn_sorting_network")
 
-# Load the trained model
-model = DQN.load("dqn_sorting_network")
+# # Load the trained model
+# model = DQN.load("dqn_sorting_network")
 
 # Extract the network parameters
-params = model.policy.parameters()
-# Get the sorted order using the network parameters
-sorted_order = np.argsort(params)
+# Extract the network parameters
+params = model.policy.q_net.parameters()
 
-# Plot the sorted order
-plt.bar(range(len(sorted_order)), sorted_order)
-plt.xlabel('Index')
-plt.ylabel('Element Value')
-plt.title('Optimal Sorting Network')
-plt.show()
+# Get the comparators
+comparators = []
+for layer in params:
+    for param in layer:
+        if param.shape == (2,):  # Assuming the comparators are represented as 2-element tensors
+            comparators.append((param[0].item(), param[1].item()))
+
+# Print the comparators
+for comparator in comparators:
+    print(f"Comparator: {comparator}")
 
 # Evaluate the agent
 num_episodes = 1

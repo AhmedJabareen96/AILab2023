@@ -43,7 +43,7 @@ def main():
     plt.legend()
     plt.show()
 
-    print()
+    coevolution.network_population[10].draw()
 
 
 if __name__ == '__main__':

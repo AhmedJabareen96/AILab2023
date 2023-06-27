@@ -1,7 +1,7 @@
+import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
-import networkx as nx
-from networkx.drawing.nx_agraph import graphviz_layout
+
 
 class SortingNetwork:
     def __init__(self, num_elements):
@@ -68,42 +68,3 @@ class SortingNetwork:
 
         # Show the plot
         plt.show()
-
-        # def draw(self):
-        #     # Create a directed graph
-        #     graph = nx.DiGraph()
-        #
-        #     # Add nodes for each index
-        #     for i in range(self.num_elements):
-        #         graph.add_node(i)
-        #
-        #     # Add edges between rows based on comparators
-        #     for i in range(self.num_comparators):
-        #         a, b = self.comparators[i]
-        #         graph.add_edge(a, b)
-        #
-        #     # Set the position of each node
-        #     pos = {}
-        #     for i in range(self.num_elements):
-        #         pos[i] = (i, 0)
-        #
-        #     # Draw horizontal lines for each index
-        #     y_offset = 1
-        #     for i in range(self.num_elements):
-        #         plt.plot([-0.5, self.num_elements - 0.5], [i, i], 'k-', linewidth=2)
-        #         pos[i] = (pos[i][0], y_offset)
-        #         y_offset += 1
-        #
-        #     # Draw vertical lines for comparators
-        #     for i in range(self.num_comparators):
-        #         a, b = self.comparators[i]
-        #         plt.plot([a, b], [pos[a][1], pos[b][1]], 'k-', linewidth=2)
-        #
-        #     # Set axis properties
-        #     plt.title("Sorting Network")
-        #     plt.xlim(-0.5, self.num_elements - 0.5)
-        #     plt.ylim(-0.5, y_offset - 0.5)
-        #     plt.axis('off')
-        #
-        #     # Show the plot
-        #     plt.show()
