@@ -1,3 +1,5 @@
+import random
+
 import gym
 import plotly.graph_objects as go
 import numpy as np
@@ -14,75 +16,93 @@ class SortingNetworkEnv(gym.Env):
     def __init__(self, num_elements):
         super(SortingNetworkEnv, self).__init__()
 
+        self.current_step=0
+        self.added_comp=0
         self.num_elements = num_elements
-        self.observation_space = spaces.Box(low=0, high=1, shape=(num_elements,))  # State represents the current order of elements
+        self.observation_space = spaces.Box(low=0, high=1, shape=(100,num_elements))  # State represents the current order of elements
         self.network = SortingNetwork(self.num_elements)
-        self.action_space = spaces.Discrete(self.network.num_comparators-1)  # Actions correspond to indices of elements
+        # self.action_space = spaces.Discrete(self.network.num_comparators-1)  # Actions correspond to indices of elements
+        self.state = np.random.rand(100, self.num_elements)  # Initialize the state with random order of elements
+        # Update the action space to include swap, add, and remove operations
+        self.action_space = spaces.Discrete(3)  # Three possible actions: swap, add, remove
+
 
 
     def reset(self):
-        self.state = np.random.rand(self.num_elements)  # Initialize the state with random order of elements
+        self.state = np.random.rand(100,self.num_elements)  # Initialize the state with random order of elements
         self.network = SortingNetwork(self.num_elements)
+        self.current_step = 0
+        self.added_comp=0
         return self.state.copy()
-
     def step(self, action):
+        if self._is_sorted():
+            return self.state.copy(),0,True,{}
 
-        # swap
-        tmp1=self.network.copy()
-        tmp_arr1=self.state.copy()
-        # Perform the selected action (swap elements at the given indices)
-        tmp1.comparators[action],tmp1.comparators[action+1]=tmp1.comparators[action+1],tmp1.comparators[action]
-        tmp_arr1=tmp1.sort(tmp_arr1)
-
-        # Calculate the reward based on the sorting quality (e.g., number of out-of-order pairs)
-        reward1 = -get_num_out_of_order_pairs(tmp_arr1)
-
-        # delete comprator
-        tmp2=self.network.copy()
-        tmp_arr2=self.state.copy()
-        # Perform the selected action (swap elements at the given indices)
-        tmp2.delete_comp(action)
-        tmp_arr2=tmp2.sort(tmp_arr2)
-
-        # Calculate the reward based on the sorting quality (e.g., number of out-of-order pairs)
-        reward2 = -get_num_out_of_order_pairs(tmp_arr2)+2
-
-        # add comperator
-        tmp3=self.network.copy()
-        tmp_arr3=self.state.copy()
-        # Perform the selected action (swap elements at the given indices)
-        tmp3.add_comp(action)
-        tmp_arr3=tmp3.sort(tmp_arr3)
-
-        # Calculate the reward based on the sorting quality (e.g., number of out-of-order pairs)
-        reward3 = -get_num_out_of_order_pairs(tmp_arr3)-2
-
-        if reward1> reward2 and reward1 > reward3:
-            self.state=tmp_arr1
-            self.network=tmp1
-            reward=reward1
-        else:
-            if reward2>reward1 and reward2>reward3:
-                self.state = tmp_arr2
-                self.network = tmp2
-                reward = reward2
-            else:
-                self.state = tmp_arr3
-                self.network = tmp3
-                reward = reward3
-
-
+        if action == 0:
+            # Swap operation
+            self.apply_swap_action()
+            self.state=self.network.sort(self.state)
+        elif action == 1:
+            # Add operation
+            self.apply_add_action()
+            # if len(self.network.comparators) > 0:
+            #     self.network.comparators[np.random.randint(0, len(self.network.comparators))]=[np.random.randint(0, len(self.state)),np.random.randint(0, len(self.state))]
+            self.state=self.network.sort(self.state)
+        elif action == 2:
+            # Remove operation
+            self.apply_remove_action()
+            self.state=self.network.sort(self.state)
+        self.optimize()
+        reward = -self._get_num_out_of_order_pairs() - self.added_comp
+        self.current_step+=1
         # Check if the sorting is complete
-        done = self._is_sorted()
+        done = self._is_sorted() #or self.current_step>10000
 
         # Return the next state, reward, and done flag
         return self.state.copy(), reward, done, {}
 
+
+
+
+    def apply_swap_action(self):
+        # Swap elements in the sorting network
+        if len(self.network.comparators)>0:
+            i, j = np.random.randint(0, len(self.network.comparators)),np.random.randint(0, len(self.network.comparators))
+            self.network.comparators[i], self.network.comparators[j] = self.network.comparators[j], self.network.comparators[i]
+
+    def apply_add_action(self):
+        self.added_comp+=1
+        self.network.add_comp()
+
+    def apply_remove_action(self):
+        if len(self.network.comparators)>0:
+            self.network.delete_comp(np.random.randint(0, len(self.network.comparators)))
+            self.added_comp-=1
+    def optimize(self):
+        index = 0
+        while index < len(self.network.comparators) - 1:
+            current_element = self.network.comparators[index]
+            next_element = self.network.comparators[index + 1]
+
+            if current_element[0] == next_element[0] and current_element[1]==next_element[1]:
+                self.network.comparators = np.delete(self.network.comparators, index + 1, axis=0)
+                self.added_comp-=1
+            else:
+                index += 1
+
     def _is_sorted(self):
-        return np.all(self.state[:-1] <= self.state[1:])
+        for arr in self.state:
+            if not ( np.all(arr[:-1]<=arr[1:]) ):
+                return False
+        return True
+
+        #return np.all(self.state[:-1] <= self.state[1:])
 
     def _get_num_out_of_order_pairs(self):
-        return np.sum(self.state[:-1] > self.state[1:])
+        sum=0
+        for arr in self.state:
+            sum+= np.sum(arr[:-1] > arr[1:])
+        return sum/100
 
 
 
@@ -95,10 +115,10 @@ env = SortingNetworkEnv(num_elements=6)
 #             batch_size=64, gamma=0.6, target_update_interval=500, exploration_fraction=0.4,
 #             exploration_final_eps=0.01, verbose=1)
 
-model = DQN('MlpPolicy', env, verbose=1, learning_rate=0.1,gamma=0.5,exploration_fraction=0.7)
+model = DQN('MlpPolicy', env, verbose=1, learning_rate=0.1,gamma=0.95,exploration_fraction=0.3)
 
 # Train the agent
-model.learn(total_timesteps=10000 )
+model.learn(total_timesteps=10000)
 
 # # Save the trained model
 # model.save("dqn_sorting_network")
@@ -110,8 +130,9 @@ total_rewards = 0
 max_episode_length = 100  # Set a maximum episode length
 # Initialize a list to store the rewards per iteration
 reward_progress = []
-fig = go.Figure()
-plt.ion()  # Enable interactive mode
+
+env.network.draw()
+print("net size ",len(env.network.comparators) )
 for _ in range(num_episodes):
     obs = env.reset()
     episode_reward = 0
@@ -119,7 +140,7 @@ for _ in range(num_episodes):
     step_count = 0  # Track the number of steps taken in the current episode
 
 
-    while not done and step_count<1000 :
+    while not done :
         action, a = model.predict(obs)
         action = action.item()  # Convert action to scalar integer
         obs, reward, done, _ = env.step(action)
@@ -136,14 +157,12 @@ for _ in range(num_episodes):
         # plt.clf()  # Clear the plot for the next iteration
 
 
-    print(1)
-
     total_rewards += episode_reward
-env.network.draw()
-plt.ioff()  # Turn off interactive mode
+# env.network.draw()
 average_reward = total_rewards / step_count
 print(f"Average reward over {num_episodes} episodes: {average_reward}")
-print("net size ",env.network.num_comparators)
+print("sorted in : ",step_count)
+
 # Extract the network parameters
 # params = model.policy.get_parameter()
 # Close the environment
