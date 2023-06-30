@@ -1,12 +1,11 @@
 import random
+import time
 
 import gym
-import plotly.graph_objects as go
 import numpy as np
 from gym import spaces
 from matplotlib import pyplot as plt
 from stable_baselines3 import DQN
-from sympy.abc import epsilon
 from sorting_network import SortingNetwork
 
 
@@ -15,13 +14,13 @@ def get_num_out_of_order_pairs(state):
 class SortingNetworkEnv(gym.Env):
     def __init__(self, num_elements):
         super(SortingNetworkEnv, self).__init__()
-
+        self.episodes=0
         self.current_step=0
         self.added_comp=0
         self.num_elements = num_elements
         self.observation_space = spaces.Box(low=0, high=1, shape=(100,num_elements))  # State represents the current order of elements
         self.network = SortingNetwork(self.num_elements)
-        # self.action_space = spaces.Discrete(self.network.num_comparators-1)  # Actions correspond to indices of elements
+
         self.state = np.random.rand(100, self.num_elements)  # Initialize the state with random order of elements
         # Update the action space to include swap, add, and remove operations
         self.action_space = spaces.Discrete(3)  # Three possible actions: swap, add, remove
@@ -33,6 +32,7 @@ class SortingNetworkEnv(gym.Env):
         self.network = SortingNetwork(self.num_elements)
         self.current_step = 0
         self.added_comp=0
+        self.episodes+=1
         return self.state.copy()
     def step(self, action):
         if self._is_sorted():
@@ -91,9 +91,13 @@ class SortingNetworkEnv(gym.Env):
                 index += 1
 
     def _is_sorted(self):
-        for arr in self.state:
+        for i in range(len(self.state)):
+            arr=self.state[i]
             if not ( np.all(arr[:-1]<=arr[1:]) ):
                 return False
+            else:
+                self.state[i]= np.random.rand(self.num_elements)
+
         return True
 
         #return np.all(self.state[:-1] <= self.state[1:])
@@ -108,60 +112,94 @@ class SortingNetworkEnv(gym.Env):
 
 
 # Create the SortingNetworkEnv
-env = SortingNetworkEnv(num_elements=6)
+env = SortingNetworkEnv(num_elements=10)
 
 # # Create the DQN agent
 # model = DQN('MlpPolicy', env, learning_rate=0.1, buffer_size=100000, learning_starts=1000,
 #             batch_size=64, gamma=0.6, target_update_interval=500, exploration_fraction=0.4,
 #             exploration_final_eps=0.01, verbose=1)
 
-model = DQN('MlpPolicy', env, verbose=1, learning_rate=0.1,gamma=0.95,exploration_fraction=0.3)
+model = DQN('MlpPolicy', env, verbose=1, learning_rate=0.1,gamma=0.95,exploration_fraction=0.3,buffer_size=1000)
 
+
+# Start the timer
+start_time = time.time()
 # Train the agent
 model.learn(total_timesteps=10000)
 
-# # Save the trained model
-# model.save("dqn_sorting_network")
+# Calculate the elapsed time
+elapsed_time = time.time() - start_time
+
+# Print the elapsed time
+print("Elapsed time:", elapsed_time, "seconds")
+print(f"took {env.episodes} to learn the model")
 
 
 # Evaluate the agent
-num_episodes = 1
+num_episodes = 10
 total_rewards = 0
 max_episode_length = 100  # Set a maximum episode length
 # Initialize a list to store the rewards per iteration
 reward_progress = []
 
 env.network.draw()
-print("net size ",len(env.network.comparators) )
+
+reward_per_step = []
+reward_per_episode = []
+episode_lengths = []
 for _ in range(num_episodes):
     obs = env.reset()
+
     episode_reward = 0
     done = False
     step_count = 0  # Track the number of steps taken in the current episode
 
 
     while not done :
-        action, a = model.predict(obs)
+        action, q = model.predict(obs)
         action = action.item()  # Convert action to scalar integer
         obs, reward, done, _ = env.step(action)
         episode_reward += reward
         step_count += 1
-        # reward_progress.append(reward)  # Append the reward to the progress list
-        # # Plot the reward progress
-        # plt.plot(reward_progress)
-        # plt.xlabel('Iteration')
-        # plt.ylabel('Reward')
-        # plt.title('Reward Progress')
-        # plt.draw()
-        # plt.pause(0.001)  # Pause to allow the plot to update
-        # plt.clf()  # Clear the plot for the next iteration
+        reward_per_step.append(reward )
+
+
+
+    episode_lengths.append(step_count)
+    reward_per_episode.append(episode_reward/step_count)
 
 
     total_rewards += episode_reward
 # env.network.draw()
 average_reward = total_rewards / step_count
-print(f"Average reward over {num_episodes} episodes: {average_reward}")
-print("sorted in : ",step_count)
+
+average_reward_per_step = sum(reward_per_step) / len(reward_per_step)
+average_reward_per_episode = sum(reward_per_episode) / len(reward_per_episode)
+average_episode_length = sum(episode_lengths) / len(episode_lengths)
+print(f"Average episode length : {average_episode_length} steps ")
+
+# Plotting
+plt.figure(figsize=(12, 6))
+plt.subplot(1, 3, 1)
+plt.plot(reward_per_step)
+plt.xlabel("Step")
+plt.ylabel("Average Reward per Agent Step")
+plt.title("Average Reward per Agent Step")
+
+plt.subplot(1, 3, 2)
+plt.plot(reward_per_episode)
+plt.xlabel("Episode")
+plt.ylabel("Average Reward per Episode")
+plt.title("Average Reward per Episode")
+
+plt.subplot(1, 3, 3)
+plt.plot(episode_lengths)
+plt.xlabel("Episode")
+plt.ylabel("Average Episode Length (Steps)")
+plt.title("Average Episode Length (Steps)")
+
+plt.tight_layout()
+plt.show()
 
 # Extract the network parameters
 # params = model.policy.get_parameter()

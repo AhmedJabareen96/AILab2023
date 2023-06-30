@@ -9,13 +9,6 @@ class SortingNetwork:
         self.num_comparators = num_elements * (num_elements - 1) // 2
         self.generate_random()
 
-    def crossover(self, other):
-        child = SortingNetwork(self.num_elements)
-        child.comparators = np.where(np.random.rand(*child.comparators.shape) < 0.5,
-                                     self.comparators,
-                                     other.comparators)
-        return child
-
     def copy(self):
         new_network = SortingNetwork(self.num_elements)
         new_network.comparators = np.copy(self.comparators)
