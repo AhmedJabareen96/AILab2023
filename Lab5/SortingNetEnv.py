@@ -35,13 +35,15 @@ class SortingNetworkEnv(gym.Env):
         self.episodes+=1
         return self.state.copy()
     def step(self, action):
+        self.state = self.network.sort(self.state)
         if self._is_sorted():
             return self.state.copy(),0,True,{}
 
         if action == 0:
             # Swap operation
             self.apply_swap_action()
-            self.state=self.network.sort(self.state)
+            self.state = self.network.sort(self.state)
+
         elif action == 1:
             # Add operation
             self.apply_add_action()
@@ -112,7 +114,7 @@ class SortingNetworkEnv(gym.Env):
 
 
 # Create the SortingNetworkEnv
-env = SortingNetworkEnv(num_elements=10)
+env = SortingNetworkEnv(num_elements=6)
 
 # # Create the DQN agent
 # model = DQN('MlpPolicy', env, learning_rate=0.1, buffer_size=100000, learning_starts=1000,
